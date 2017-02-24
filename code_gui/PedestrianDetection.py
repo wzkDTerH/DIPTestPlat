@@ -5,12 +5,25 @@ import cv2
 import time
 import DetectionFunction
 import ReadFunction
+import wx
+import threading
 
-help_message = '''
-USAGE: PedestrianDetection.py <readfunction> <Detectionfunction> <image_names> ...
+class controlPanel(wx.Panel):
+     def __init__(self,parent):
+          wx.Panel.__init__(self, parent)
+          grid = wx.GridBagSizer(hgap=5, vgap=5)
 
-Press any key to continue, ESC to stop.
-'''
+          self.readFunctionNotice = wx.StaticText(self, label="Your Read Function: ")
+          grid.Add(self.readFunctionNotice, pos=(0,0),span=(1,2))
+          self.readFunctionList = [name for name in ReadFunction.readFunctionDict]
+          self.readFunctionCombo = wx.ComboBox(self, choices=self.readFunctionList, style=wx.CB_DROPDOWN)
+          grid.Add(self.readFunctionCombo, pos=(0,3))
+
+          topsizer=wx.BoxSizer(wx.HORIZONTAL)
+          topsizer.Add(grid,0,wx.ALL, 5)
+          self.SetSizerAndFit(topsizer)
+
+
 def inside(r, q):
      rx, ry, rw, rh = r
      qx, qy, qw, qh = q
@@ -26,7 +39,12 @@ if __name__ == '__main__':
      import os
      from glob import glob
      import itertools as it
-     print help_message
+
+     app = wx.App(False)
+     mainframe = wx.Frame(None)
+     mainPanel= controlPanel(mainframe)
+     mainframe.Show()
+     app.MainLoop()
 
      try:
           readFunction=ReadFunction.readFunctionDict[sys.argv[1]]
