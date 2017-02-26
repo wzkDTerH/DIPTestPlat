@@ -8,21 +8,48 @@ import ReadFunction
 import wx
 import threading
 
+class flowModel:
+     def __init__(self):
+          pass
+
 class controlPanel(wx.Panel):
-     def __init__(self,parent):
+     def __init__(self,parent,model):
           wx.Panel.__init__(self, parent)
           grid = wx.GridBagSizer(hgap=5, vgap=5)
 
-          self.readFunctionNotice = wx.StaticText(self, label="Your Read Function: ")
-          grid.Add(self.readFunctionNotice, pos=(0,0),span=(1,2))
-          self.readFunctionList = [name for name in ReadFunction.readFunctionDict]
-          self.readFunctionCombo = wx.ComboBox(self, choices=self.readFunctionList, style=wx.CB_DROPDOWN)
-          grid.Add(self.readFunctionCombo, pos=(0,3))
+          strpre=[["read","Read"],["detection","Detection"]]
+          row=0
+          for pre in strpre:
+               _Model=pre[1]+'Function'
+               _Dict=pre[0]+'FunctionDict'
+               _Default=pre[0]+'FunctionDefault'
+               _Notice='self.'+pre[0]+'FunctionNotice'
+               _label='\'Your '+pre[1]+' Function: \''
+               _List='self.'+pre[0]+'FunctionList'
+               _Combo='self.'+pre[0]+'FunctionComo'
+               _Open='self.'+pre[0]+'FunctionOpen'
+               _FileName='self.'+pre[0]+'FunctionFileName'
+               #du liu xie fa, ni zhi de yong you
+               exec(_Notice+'= wx.StaticText(self, label='+_label+')')
+               grid.Add(eval(_Notice), pos=(row,0),span=(1,2))
+
+               exec(_List+'= [name for name in '+_Model+'.'+_Dict+']')
+               exec(_Combo+' = wx.ComboBox(self, choices='+_List+', style=wx.CB_DROPDOWN)')
+               exec(_Combo+'.SetValue('+_Model+'.'+_Default+')')
+               grid.Add(eval(_Combo), pos=(row,3))
+
+               exec(_Open+'=wx.Button(self,label=\'Open\',)')
+               grid.Add(eval(_Open), pos=(row,4))
+
+               exec(_FileName+'=wx.TextCtrl(self,size=(200,-1))')
+               grid.Add(eval(_FileName), pos=(row,5),span=(1,2))
+
+               row=row+1
 
           topsizer=wx.BoxSizer(wx.HORIZONTAL)
           topsizer.Add(grid,0,wx.ALL, 5)
           self.SetSizerAndFit(topsizer)
-
+#     def onChooseReadFunction(self,event):
 
 def inside(r, q):
      rx, ry, rw, rh = r
@@ -40,9 +67,11 @@ if __name__ == '__main__':
      from glob import glob
      import itertools as it
 
+     model=flowModel()
      app = wx.App(False)
      mainframe = wx.Frame(None)
-     mainPanel= controlPanel(mainframe)
+     mainPanel= controlPanel(mainframe,model)
+     mainframe.SetSize((720,200))
      mainframe.Show()
      app.MainLoop()
 

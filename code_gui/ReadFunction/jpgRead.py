@@ -1,6 +1,6 @@
 import cv2
 import os
-class jpgRead:
+class jpgReader:
      def __init__(self,name):
           self.filename=name
           self.filesnamenum=1;
@@ -10,5 +10,5 @@ class jpgRead:
      def getImg(self):
           self.readflag=self.readflag+1
           return cv2.imread(self.filename)
-     def waitTime(self):
-          return -1
+     
+jpgRead={'filetype':"file",'waitTime':-1,'reader':jpgReader}

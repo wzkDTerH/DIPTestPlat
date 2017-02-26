@@ -1,6 +1,7 @@
 import cv2
 import os
-class jpgsRead:
+
+class jpgsReader:
      def __init__(self,name):
           self.rootdir=name
           self.filesname=[]
@@ -15,5 +16,5 @@ class jpgsRead:
      def getImg(self):
           self.readflag=self.readflag+1
           return cv2.imread(self.filesname[self.readflag-1])
-     def waitTime(self):
-          return 20
+
+jpgsRead={'filetype':"dir",'waitTime':20,'reader':jpgsReader}

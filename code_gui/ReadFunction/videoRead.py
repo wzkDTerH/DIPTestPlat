@@ -1,6 +1,6 @@
 import cv2
 import os
-class videoRead:
+class videoReader:
      def __init__(self,name):
           self.cap = cv2.VideoCapture(name) 
      def end(self):
@@ -8,5 +8,5 @@ class videoRead:
      def getImg(self):
           ret, frame = self.cap.read()
           return frame
-     def waitTime(self):
-          return 20
+
+videoRead={'filetype':"file",'waitTime':20,'reader':videoReader}
