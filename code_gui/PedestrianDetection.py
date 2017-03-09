@@ -10,47 +10,129 @@ import threading
 
 class flowModel:
      def __init__(self):
+          self.rdf_name=ReadFunction.readFunctionDefault
+          self.rdf=ReadFunction.readFunctionDict[self.rdf_name]
+          self.dttf_name=DetectionFunction.detectionFunctionDefault
+          self.dttf=DetectionFunction.detectionFunctionDict[self.dttf_name]
+          self.rdf_filename=''
+          self.running=False
+          pass
+     def Run(self):
+          rdf_reader=self.rdf['reader'](self.rdf_filename)
+          dttfer=self.dttf()
+          while((not rdf_reader.end() ) and self.running):
+               try:
+                    img=rdf_reader.getImg()
+               except:
+                    print "Read img fail!"
+                    continue
+               found=dttfer.detect(img)
+               found_filtered = []
+               for ri, r in enumerate(found):
+                    for qi, q in enumerate(found):
+                         if ri != qi and inside(r, q):
+                              break
+                         else:
+                              found_filtered.append(r)
+               draw_detections(img, found)
+               draw_detections(img, found_filtered, 3)
+               print '%d (%d) found' % (len(found_filtered), len(found))
+               cv2.imshow('img', img)
+               ch = 0xFF & cv2.waitKey(self.rdf['waitTime'])
+               if ch == 27:
+                    break
+          cv2.destroyAllWindows()
           pass
 
 class controlPanel(wx.Panel):
-     def __init__(self,parent,model):
+     def __init__(self,parent):
           wx.Panel.__init__(self, parent)
           grid = wx.GridBagSizer(hgap=5, vgap=5)
-
-          strpre=[["read","Read"],["detection","Detection"]]
           row=0
-          for pre in strpre:
-               _Model=pre[1]+'Function'
-               _Dict=pre[0]+'FunctionDict'
-               _Default=pre[0]+'FunctionDefault'
-               _Notice='self.'+pre[0]+'FunctionNotice'
-               _label='\'Your '+pre[1]+' Function: \''
-               _List='self.'+pre[0]+'FunctionList'
-               _Combo='self.'+pre[0]+'FunctionComo'
-               _Open='self.'+pre[0]+'FunctionOpen'
-               _FileName='self.'+pre[0]+'FunctionFileName'
-               #du liu xie fa, ni zhi de yong you
-               exec(_Notice+'= wx.StaticText(self, label='+_label+')')
-               grid.Add(eval(_Notice), pos=(row,0),span=(1,2))
+          self.model=flowModel()
+          
+          #du liu xie fa, ni zhi de yong you
+          #readFunctionNotice
+          self.readFunctionNotice= wx.StaticText(self, label='Your read Function: ')
+          grid.Add(self.readFunctionNotice, pos=(row,0),span=(1,2))
+          
+          #readFunctionComo
+          self.readFunctionList = [name for name in ReadFunction.readFunctionDict ]
+          self.readFunctionComo = wx.ComboBox(self, choices=self.readFunctionList, style=wx.CB_DROPDOWN)
+          grid.Add(self.readFunctionComo, pos=(row,3))
+          self.Bind(wx.EVT_COMBOBOX, self.changeReadFunction, self.readFunctionComo)
+          self.readFunctionComo.SetValue(ReadFunction.readFunctionDefault)
 
-               exec(_List+'= [name for name in '+_Model+'.'+_Dict+']')
-               exec(_Combo+' = wx.ComboBox(self, choices='+_List+', style=wx.CB_DROPDOWN)')
-               exec(_Combo+'.SetValue('+_Model+'.'+_Default+')')
-               grid.Add(eval(_Combo), pos=(row,3))
+          #readFunctionOpen
+          self.readFunctionOpen =wx.Button(self,label='Open')
+          self.Bind(wx.EVT_BUTTON,self.clickOpen,self.readFunctionOpen)
+          grid.Add(self.readFunctionOpen, pos=(row,4))
 
-               exec(_Open+'=wx.Button(self,label=\'Open\',)')
-               grid.Add(eval(_Open), pos=(row,4))
+          #readFunctionFileName
+          self.readFunctionFileName =wx.TextCtrl(self,size=(200,-1))
+          grid.Add(self.readFunctionFileName, pos=(row,5),span=(1,2))
+          
+          row=row+1
+          #detectionFunctionNotice
+          self.detectionFunctionNotice= wx.StaticText(self, label='Your Detection Function: ')
+          grid.Add(self.detectionFunctionNotice, pos=(row,0),span=(1,2))
 
-               exec(_FileName+'=wx.TextCtrl(self,size=(200,-1))')
-               grid.Add(eval(_FileName), pos=(row,5),span=(1,2))
+          #detectionFunctionList
+          self.detectionFunctionList = [name for name in DetectionFunction.detectionFunctionDict ]
+          self.detectionFunctionComo = wx.ComboBox(self, choices=self.detectionFunctionList, style=wx.CB_DROPDOWN)
+          grid.Add(self.detectionFunctionComo, pos=(row,3))
+          self.Bind(wx.EVT_COMBOBOX, self.changeDetectionFunction, self.detectionFunctionComo)
+          self.detectionFunctionComo.SetValue(DetectionFunction.detectionFunctionDefault)
 
-               row=row+1
+          row=row+1
+          #runButton
+          self.runButton =wx.ToggleButton(self,label='Run')
+          grid.Add(self.runButton, pos=(row,3))
+          self.runButton.Bind(wx.EVT_TOGGLEBUTTON,self.buttonRun)
 
+          #sizer
           topsizer=wx.BoxSizer(wx.HORIZONTAL)
           topsizer.Add(grid,0,wx.ALL, 5)
           self.SetSizerAndFit(topsizer)
-#     def onChooseReadFunction(self,event):
+     def changeReadFunction(self,event):
+          print "ReadFunction ",event.GetString()
+          self.model.rdf_name=event.GetString()
+          self.model.rdf=ReadFunction.readFunctionDict[self.model.rdf_name]
 
+     def changeDetectionFunction(self,event):
+          print "DetectionFunction ",event.GetString()
+          self.model.dttf_name=event.GetString()
+          self.model.dttf=DetectionFunction.detectionFunctionDict[self.model.dttf_name]
+
+     def clickOpen(self,event):
+          print "clickOpen"
+          if(self.model.rdf['filetype']=='dir'):
+               dlg = wx.DirDialog(self, "Open file...",os.getcwd(),style=wx.DD_DEFAULT_STYLE)
+               if dlg.ShowModal() == wx.ID_OK:
+                    dirname=dlg.GetPath()
+                    self.readFunctionFileName.SetValue(dirname)
+                    print "open dir",dirname
+               dlg.Destroy()
+          elif(self.model.rdf['filetype']=='file'):
+               dlg = wx.FileDialog(self, "Open file...",os.getcwd(), style = wx.OPEN)
+               if dlg.ShowModal() == wx.ID_OK:
+                    filename=dlg.GetPath()
+                    self.readFunctionFileName.SetValue(filename)
+                    print "open file",filename
+               dlg.Destroy()
+          elif(self.model.rdf['filetype']=='num'):
+               self.readFunctionFileName.SetValue('0')
+          
+     def buttonRun(self,event):
+          state=self.runButton.GetValue()
+          self.model.rdf_filename=self.readFunctionFileName.GetValue()
+          if(state):
+               self.runButton.SetLabel('Stop')
+               self.model.running=True
+               self.model.Run()
+          else:
+               self.runButton.SetLabel('Run')
+               self.model.running=False
 def inside(r, q):
      rx, ry, rw, rh = r
      qx, qy, qw, qh = q
@@ -67,50 +149,11 @@ if __name__ == '__main__':
      from glob import glob
      import itertools as it
 
-     model=flowModel()
      app = wx.App(False)
      mainframe = wx.Frame(None)
-     mainPanel= controlPanel(mainframe,model)
+     mainPanel= controlPanel(mainframe)
      mainframe.SetSize((720,200))
      mainframe.Show()
      app.MainLoop()
 
-     try:
-          readFunction=ReadFunction.readFunctionDict[sys.argv[1]]
-     except:
-          print "No such read-function!"
-          exit()
-     try:
-          detectionFunction=DetectionFunction.detectionFunctionDict[sys.argv[2]]
-     except:
-          print "No such detection-function!"
-          exit()
-     try:
-          filename=sys.argv[3]
-     except:
-          print "No file name!"
-          exit()
-     rdf=readFunction(filename)
-     dttf=detectionFunction()
-     while(not rdf.end()):
-          try:
-               img=rdf.getImg()
-          except:
-               print "Read img fail!"
-               continue
-          found=dttf.detect(img)
-          found_filtered = []
-          for ri, r in enumerate(found):
-               for qi, q in enumerate(found):
-                    if ri != qi and inside(r, q):
-                         break
-                    else:
-                         found_filtered.append(r)
-          draw_detections(img, found)
-          draw_detections(img, found_filtered, 3)
-          print '%d (%d) found' % (len(found_filtered), len(found))
-          cv2.imshow('img', img)
-          ch = 0xFF & cv2.waitKey(rdf.waitTime())
-          if ch == 27:
-               break
-     cv2.destroyAllWindows()
+

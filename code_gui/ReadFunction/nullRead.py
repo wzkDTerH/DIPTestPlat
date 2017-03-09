@@ -3,7 +3,7 @@ class nullReader:
      def __init__(self,name):
           pass
      def end(self):
-         return ture
+         return True
      def getImg(self):
           return
 

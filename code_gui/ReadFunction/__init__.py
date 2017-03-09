@@ -9,4 +9,4 @@ for filename in filenamelist:
                exec('import '+name)
                readFunctionDict[name]=eval(name+'.'+name)
 
-readFunctionDefault="null"
+readFunctionDefault="nullRead"
