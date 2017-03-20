@@ -1,12 +1,22 @@
 #!/usr/bin/env python
 
+import wx
 import numpy as np
 import cv2
 import time
 import DetectionFunction
 import ReadFunction
-import wx
 import threading
+
+def inside(r, q):
+     rx, ry, rw, rh = r
+     qx, qy, qw, qh = q
+     return rx > qx and ry > qy and rx + rw < qx + qw and ry + rh < qy + qh
+
+def draw_detections(img, rects, thickness = 1):
+     for x, y, w, h in rects:
+          pad_w, pad_h = int(0.15*w), int(0.05*h)
+          cv2.rectangle(img, (x+pad_w, y+pad_h), (x+w-pad_w, y+h-pad_h), (0, 255, 0), thickness)
 
 class flowModel:
      def __init__(self):
@@ -34,7 +44,7 @@ class flowModel:
                               break
                          else:
                               found_filtered.append(r)
-               draw_detections(img, found)
+              # draw_detections(img, found)
                draw_detections(img, found_filtered, 3)
                print '%d (%d) found' % (len(found_filtered), len(found))
                cv2.imshow('img', img)
@@ -42,7 +52,6 @@ class flowModel:
                if ch == 27:
                     break
           cv2.destroyAllWindows()
-          pass
 
 class controlPanel(wx.Panel):
      def __init__(self,parent):
@@ -133,15 +142,6 @@ class controlPanel(wx.Panel):
           else:
                self.runButton.SetLabel('Run')
                self.model.running=False
-def inside(r, q):
-     rx, ry, rw, rh = r
-     qx, qy, qw, qh = q
-     return rx > qx and ry > qy and rx + rw < qx + qw and ry + rh < qy + qh
-
-def draw_detections(img, rects, thickness = 1):
-     for x, y, w, h in rects:
-          pad_w, pad_h = int(0.15*w), int(0.05*h)
-          cv2.rectangle(img, (x+pad_w, y+pad_h), (x+w-pad_w, y+h-pad_h), (0, 255, 0), thickness)
 
 if __name__ == '__main__':
      import sys

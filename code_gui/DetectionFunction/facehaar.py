@@ -7,4 +7,5 @@ class facehaar:
           gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
           gray = cv2.equalizeHist(gray)
           faces=self.face_cascade.detectMultiScale(img, scaleFactor=1.3, minNeighbors=4, minSize=(30, 30), flags = cv2.cv.CV_HAAR_SCALE_IMAGE)
+          print faces
           return faces
